@@ -40,7 +40,12 @@ body {
 		<legend>woodwhales-maven-project-parser</legend>
 	</fieldset>
 	
-	<blockquote class="layui-elem-quote">maven&nbsp;工程解析器</blockquote>
+	<blockquote class="layui-elem-quote">
+        <p>一键解析&nbsp;maven&nbsp;工程依赖关系</p>
+    </blockquote>
+	<blockquote class="layui-elem-quote layui-quote-nm">
+        <p>plantuml代码解析官网：<a href="http://www.plantuml.com/plantuml/uml/" target="_blank">http://www.plantuml.com/plantuml/uml/</a></p>
+    </blockquote>
 
     <fieldset class="layui-elem-field layui-field-title" style="margin-top: 30px;">
         <legend>project info</legend>
@@ -51,14 +56,30 @@ body {
 	    <label class="layui-form-label">项目路径</label>
 	    <div class="layui-input-block">
 	      <input type="text" id="projectFilePath" name="projectFilePath" autocomplete="off" placeholder="请输入 项目路径" lay-verify="required" class="layui-input">
-	      <input type="text" id="showComponentId" name="showComponent" value="false" hidden="true">
+
+
 	    </div>
 	  </div>
 	  <div class="layui-form-item">
-	    <label class="layui-form-label">组件视图是否增加组件</label>
-	    <div class="layui-input-block">
-	      <input type="checkbox" lay-skin="switch" lay-filter="showComponentFilter" lay-text="显示|不显示">
-	    </div>
+          <div class="layui-inline">
+            <label class="layui-form-label">生成组件</label>
+            <input type="checkbox" lay-skin="switch" lay-filter="showComponentFilter" checked lay-text="显示|不显示">
+            <input type="text" id="showComponentId" name="showComponent" value="true" hidden="true">
+          </div>
+          <div class="layui-inline">
+              <label class="layui-form-label">全部依赖</label>
+              <input type="checkbox" lay-skin="switch" lay-filter="showAllRelationFilter" checked lay-text="全部|部分">
+              <input type="text" id="showAllRelationId" name="showAllRelation" value="true" hidden="true">
+          </div>
+
+        <!--
+         TODO 显示版本有问题，需要再优化，暂不支持该功能
+         <div class="layui-inline">
+              <label class="layui-form-label">显示版本</label>
+              <input type="checkbox" lay-skin="switch" lay-filter="showVersionFilter" lay-text="显示|不显示">
+              <input type="text" id="showVersionId" name="showVersion" value="false" hidden="true">
+         </div>
+          -->
 	  </div>
 	  <div class="layui-form-item">
           <div class="layui-input-block">
@@ -82,7 +103,7 @@ body {
         <div class="layui-collapse">
             <div class="layui-colla-item">
                 <h2 class="layui-colla-title">组件视图-图片</h2>
-                <div class="layui-colla-content"><img id="modulesImageBase64Id"/></div>
+                <div class="layui-colla-content" id="layui-colla-item-modules"><img id="modulesImageBase64Id"/></div>
             </div>
         </div>
     </div>
@@ -96,7 +117,7 @@ body {
         <div class="layui-collapse">
             <div class="layui-colla-item">
                 <h2 class="layui-colla-title">关系视图-图片</h2>
-                <div class="layui-colla-content"><img id="relationsImageBase64Id"/></div>
+                <div class="layui-colla-content" id="layui-colla-item-relations"><img id="relationsImageBase64Id"/></div>
             </div>
         </div>
     </div>
@@ -118,8 +139,37 @@ body {
 	    } else {
 	    	$('#showComponentId').val('false');
 	    }
-	}); 
-	  
+	});
+
+    form.on('switch(showAllRelationFilter)', function(data){
+        if(this.checked) {
+            $('#showAllRelationId').val('true');
+        } else {
+            $('#showAllRelationId').val('false');
+        }
+    });
+
+    form.on('switch(showVersionFilter)', function(data){
+        if(this.checked) {
+            $('#showVersionId').val('false');
+        } else {
+            $('#showVersionId').val('false');
+        }
+    });
+
+    $('#resetBtn').click(function() {
+        $('#projectFilePath').val('');
+        $('#modulesId').html("");
+        $('#relationsId').html("");
+        $('#modulesImageBase64Id').hide();
+        $('#relationsImageBase64Id').hide();
+        $('#modulesImageBase64Id').attr("src", '');
+        $('#relationsImageBase64Id').attr("src", '');
+        $("#layui-colla-item-modules").removeClass("layui-show");
+        $("#layui-colla-item-relations").removeClass("layui-show");
+        element.render('collapse');
+    });
+
 	form.on('submit(submitFilter)', function(data) {
 		var index = layer.load(2, { shade: [0.1,'#fff'] });
 		$.ajax({
@@ -139,6 +189,9 @@ body {
                     $('#relationsImageBase64Id').show();
                     $('#modulesImageBase64Id').attr("src", res.data.modulesImageBase64);
                     $('#relationsImageBase64Id').attr("src", res.data.relationsImageBase64);
+                    $("#layui-colla-item-modules").addClass("layui-show");
+                    $("#layui-colla-item-relations").addClass("layui-show");
+                    element.render('collapse');
                     layer.msg(res.msg, {icon: 1});
                 } else {
                     $('#modulesId').html("");
@@ -147,6 +200,9 @@ body {
                     $('#relationsImageBase64Id').hide();
                     $('#modulesImageBase64Id').attr("src", '');
                     $('#relationsImageBase64Id').attr("src", '');
+                    $("#layui-colla-item-modules").removeClass("layui-show");
+                    $("#layui-colla-item-relations").removeClass("layui-show");
+                    element.render('collapse');
                     layer.msg(res.msg, {icon: 5});
                 }
 		    },
@@ -160,15 +216,6 @@ body {
 		
 		});
 
-        $('#resetBtn').click(function() {
-            $('#projectFilePath').val('');
-            $('#modulesId').html("");
-            $('#relationsId').html("");
-            $('#modulesImageBase64Id').hide();
-            $('#relationsImageBase64Id').hide();
-            $('#modulesImageBase64Id').attr("src", '');
-            $('#relationsImageBase64Id').attr("src", '');
-        });
 	});
 </script>
 </body>

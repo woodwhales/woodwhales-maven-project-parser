@@ -11,10 +11,12 @@ public interface PlantUmlParseManager {
 
     /**
      * 绘制组件关系图
+     * @param projectInfoRequestBody
      * @param rootMavenComponentInfo
      * @return
      */
-    OpResult<String> drawMavenComponentInfo(MavenComponentInfo rootMavenComponentInfo);
+    OpResult<String> drawMavenComponentInfo(ProjectInfoRequestBody projectInfoRequestBody,
+                                            MavenComponentInfo rootMavenComponentInfo);
 
     /**
      * 绘制依赖关系图
