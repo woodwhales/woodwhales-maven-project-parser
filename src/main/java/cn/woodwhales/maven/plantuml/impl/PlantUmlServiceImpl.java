@@ -40,23 +40,28 @@ public class PlantUmlServiceImpl implements PlantUmlService {
             wrapper.eq(ProjectInfo::getRootProjectKey, rootProjectKey);
         });
 
-        ProjectInfo rootProjectInfo = this.getRootProjectInfo(projectInfoList);
-
-        // 如果用户没有指定 groupId， 则使用根项目的 groupId
+        ProjectInfo rootProjectInfo = getRootProjectInfo(projectInfoList);
         if(StringUtils.isBlank(projectInfoRequestBody.getProjectGroupId())) {
             projectInfoRequestBody.setProjectGroupId(rootProjectInfo.getGroupId());
         }
 
         MavenComponentInfo rootMavenComponentInfo = this.tree(projectInfoList, rootProjectInfo);
-        OpResult<String> modulesOpResult = plantUmlParseManager.drawMavenComponentInfo(projectInfoRequestBody, rootMavenComponentInfo);
+
+        OpResult<String> modulesOpResult;
+        if(Boolean.TRUE.equals(projectInfoRequestBody.getShowComponent())) {
+            modulesOpResult = plantUmlParseManager.drawMavenComponentInfo(rootMavenComponentInfo);
+        } else {
+            modulesOpResult = OpResult.success();
+        }
+
         OpResult<String> relationsOpResult = plantUmlParseManager.drawMavenDependencyInfo(projectInfoRequestBody, rootMavenComponentInfo);
         PlantUmlVo plantUmlVo = new PlantUmlVo(modulesOpResult.getData(), relationsOpResult.getData());
         return RespVO.success(plantUmlVo);
     }
 
     private MavenComponentInfo tree(List<ProjectInfo> projectInfoList, ProjectInfo rootProjectInfo) {
-        MavenComponentInfo rootMavenComponentInfo = this.buildMavenComponentInfo(rootProjectInfo);
-        List<ProjectInfo> nonRootProjectInfoList = this.getNonRootProjectInfo(projectInfoList);
+        MavenComponentInfo rootMavenComponentInfo = buildMavenComponentInfo(rootProjectInfo);
+        List<ProjectInfo> nonRootProjectInfoList = getNonRootProjectInfo(projectInfoList);
         List<MavenComponentInfo> childComponentList = DataTool.toList(nonRootProjectInfoList, this::buildMavenComponentInfo);
         rootMavenComponentInfo.childComponentList = childComponentList;
         return rootMavenComponentInfo;
@@ -74,7 +79,6 @@ public class PlantUmlServiceImpl implements PlantUmlService {
         return new MavenComponentInfo(projectInfo.getId(),
                                       projectInfo.getGroupId(),
                                       projectInfo.getArtifactId(),
-                                      projectInfo.getVersion(),
                                       projectInfo.getProjectAlias());
     }
 

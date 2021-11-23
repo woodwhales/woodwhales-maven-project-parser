@@ -6,7 +6,7 @@ import cn.woodwhales.maven.controller.request.ProjectInfoRequestBody;
 import cn.woodwhales.maven.controller.response.PlantUmlVo;
 import cn.woodwhales.maven.model.BuildProjectResult;
 import cn.woodwhales.maven.service.ParseService;
-import cn.woodwhales.maven.service.PlantUmlService;
+import cn.woodwhales.maven.plantuml.PlantUmlService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.PostMapping;

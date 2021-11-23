@@ -14,6 +14,10 @@ public class ControllerAdvice {
 
     @ExceptionHandler(Exception.class)
     public RespVO exceptionHandler(Exception e) {
+        if(e instanceof NullPointerException) {
+            log.error("request error, cause by {}", "空指针异常", e);
+            return RespVO.errorWithErrorMsg("空指针异常");
+        }
         log.error("request error, cause by {}", e.getMessage(), e);
         return RespVO.errorWithErrorMsg(e.getMessage());
     }

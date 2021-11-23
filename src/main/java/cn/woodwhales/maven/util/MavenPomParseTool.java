@@ -90,9 +90,13 @@ public class MavenPomParseTool {
     }
 
     private static List<DependencyInfoDto> getDependencyInfoList(List<DependencyInfoDto> dependencyInfoDtoList, Element dependenciesElementList) {
+        if(Objects.isNull(dependenciesElementList)) {
+            return emptyList();
+        }
+
         List<Element> dependencyElementList = dependenciesElementList.elements();
         for (Element dependencyElement : dependencyElementList) {
-            DependencyInfoDto dependencyInfoDto = null;
+            DependencyInfoDto dependencyInfoDto;
             if(Objects.isNull(dependencyElement)) {
                 dependencyInfoDto = new DependencyInfoDto();
             } else {

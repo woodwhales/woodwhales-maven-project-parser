@@ -63,7 +63,7 @@ body {
 	  <div class="layui-form-item">
           <div class="layui-input-block">
             <button type="submit" class="layui-btn" lay-submit="" lay-filter="submitFilter">立即提交</button>
-            <button type="reset" class="layui-btn layui-btn-primary">重置</button>
+            <button type="reset" class="layui-btn layui-btn-primary" id="resetBtn">重置</button>
           </div>
       </div>
     </form>
@@ -73,29 +73,44 @@ body {
 	</fieldset>
 	
 	<div class="layui-form-item">
-         <label class="layui-form-label">组件视图</label>
-         <div class="layui-input-block">
-             <textarea class="layui-textarea" rows="10" id="modulesId" readonly="readonly"></textarea>
-         </div>
+        <label class="layui-form-label">组件视图</label>
+        <div class="layui-input-block">
+            <textarea class="layui-textarea" rows="10" id="modulesId" readonly="readonly"></textarea>
+        </div>
     </div>
     <div class="layui-form-item">
-         <label class="layui-form-label">关系视图</label>
-         <div class="layui-input-block">
-             <textarea class="layui-textarea" rows="10" id="relationsId" readonly="readonly"></textarea>
-         </div>
+        <div class="layui-collapse">
+            <div class="layui-colla-item">
+                <h2 class="layui-colla-title">组件视图-图片</h2>
+                <div class="layui-colla-content"><img id="modulesImageBase64Id"/></div>
+            </div>
+        </div>
     </div>
-    
+    <div class="layui-form-item">
+        <label class="layui-form-label">关系视图</label>
+        <div class="layui-input-block">
+            <textarea class="layui-textarea" rows="10" id="relationsId" readonly="readonly"></textarea>
+        </div>
+    </div>
+    <div class="layui-form-item">
+        <div class="layui-collapse">
+            <div class="layui-colla-item">
+                <h2 class="layui-colla-title">关系视图-图片</h2>
+                <div class="layui-colla-content"><img id="relationsImageBase64Id"/></div>
+            </div>
+        </div>
+    </div>
     <blockquote class="layui-elem-quote">
         <p>© 2021 <a href="https://woodwhales.cn/" target="_blank">woodwhales's blog</a>&nbsp;木鲸鱼</p>
     </blockquote>
-    
 </div>
      
 <script>
-	layui.use(['form', 'layedit', 'layer'], function(){
+	layui.use(['form', 'layedit', 'layer', 'element'], function(){
 	  var form = layui.form
 	  ,layer = layui.layer
-	  ,layedit = layui.layedit;
+	  ,layedit = layui.layedit
+      ,element = layui.element;
 	
     form.on('switch(showComponentFilter)', function(data){
 	    if(this.checked) {
@@ -120,10 +135,18 @@ body {
                 if(res.code === 0) {
                     $('#modulesId').html(res.data.modules);
                     $('#relationsId').html(res.data.relations);
+                    $('#modulesImageBase64Id').show();
+                    $('#relationsImageBase64Id').show();
+                    $('#modulesImageBase64Id').attr("src", res.data.modulesImageBase64);
+                    $('#relationsImageBase64Id').attr("src", res.data.relationsImageBase64);
                     layer.msg(res.msg, {icon: 1});
                 } else {
                     $('#modulesId').html("");
                     $('#relationsId').html("");
+                    $('#modulesImageBase64Id').hide();
+                    $('#relationsImageBase64Id').hide();
+                    $('#modulesImageBase64Id').attr("src", '');
+                    $('#relationsImageBase64Id').attr("src", '');
                     layer.msg(res.msg, {icon: 5});
                 }
 		    },
@@ -136,6 +159,16 @@ body {
 		return false;
 		
 		});
+
+        $('#resetBtn').click(function() {
+            $('#projectFilePath').val('');
+            $('#modulesId').html("");
+            $('#relationsId').html("");
+            $('#modulesImageBase64Id').hide();
+            $('#relationsImageBase64Id').hide();
+            $('#modulesImageBase64Id').attr("src", '');
+            $('#relationsImageBase64Id').attr("src", '');
+        });
 	});
 </script>
 </body>

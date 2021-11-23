@@ -127,12 +127,16 @@ public class MavenProjectManagerImpl implements MavenProjectManager {
                            final BuildProjectConfig buildProjectConfig) {
         if(ParentFlagEnum.PARENT_FLAG.match(projectInfoDtoModel.getPackaging())) {
             List<String> modules = projectInfoDtoModel.getModules();
-            for (String module : modules) {
-                String absoluteFilePath = projectInfoDtoModel.getAbsoluteFilePath();
-                String moduleAbsoluteFilePath = absoluteFilePath + File.separator + module;
-                BuildProjectConfig moduleBuildProjectConfig = buildProjectConfig.copyInstance(moduleAbsoluteFilePath);
-                MavenPomParseTool.ProjectInfoDto moduleProjectInfoDto = this.save(moduleBuildProjectConfig, NON_ROOT_FLAG);
-                this.saveChild(moduleProjectInfoDto, moduleBuildProjectConfig);
+            if(CollectionUtils.isEmpty(modules)) {
+                return;
+            } else {
+                for (String module : modules) {
+                    String absoluteFilePath = projectInfoDtoModel.getAbsoluteFilePath();
+                    String moduleAbsoluteFilePath = absoluteFilePath + File.separator + module;
+                    BuildProjectConfig moduleBuildProjectConfig = buildProjectConfig.copyInstance(moduleAbsoluteFilePath);
+                    MavenPomParseTool.ProjectInfoDto moduleProjectInfoDto = this.save(moduleBuildProjectConfig, NON_ROOT_FLAG);
+                    this.saveChild(moduleProjectInfoDto, moduleBuildProjectConfig);
+                }
             }
         }
     }
