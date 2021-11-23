@@ -1,0 +1,21 @@
+server:
+  address: 0.0.0.0
+  port: 8086
+  servlet:
+    context-path: /maven-project-parser
+
+spring:
+  thymeleaf:
+    cache: false
+  jackson:
+    date-format: yyyy-MM-dd HH:mm:ss
+    time-zone: GMT+8
+  datasource:
+    url: jdbc:mysql://127.0.0.1:3306/woodwhales_maven_project_parser?serverTimezone=Asia/Shanghai&useUnicode=true&allowMultiQueries=true&characterEncoding=utf8&useSSL=false
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    username: root
+    password: root1234
+
+logging:
+  level:
+    cn.woodwhales.maven: debug
