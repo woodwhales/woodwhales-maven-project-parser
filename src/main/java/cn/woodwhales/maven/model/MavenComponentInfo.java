@@ -12,10 +12,13 @@ public class MavenComponentInfo {
     public String artifactId;
     public String version;
     public String alias;
-
     public List<MavenComponentInfo> childComponentList;
 
-    public MavenComponentInfo(Long projectInfoId, String groupId, String artifactId, String version, String alias) {
+    public MavenComponentInfo(Long projectInfoId,
+                              String groupId,
+                              String artifactId,
+                              String version,
+                              String alias) {
         this.projectInfoId = projectInfoId;
         this.groupId = groupId;
         this.artifactId = artifactId;

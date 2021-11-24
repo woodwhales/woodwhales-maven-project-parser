@@ -30,8 +30,7 @@ public class GenerateController {
     public RespVO<PlantUmlVo> generate(@RequestBody ProjectInfoRequestBody projectInfoRequestBody) {
         OpResult<BuildProjectResult> opResult = parseService.parse(projectInfoRequestBody);
         BuildProjectResult buildProjectResult = opResult.getData();
-        RespVO<PlantUmlVo> respVO = plantUmlService.parse(projectInfoRequestBody, buildProjectResult);
-        return respVO;
+        return plantUmlService.parse(projectInfoRequestBody, buildProjectResult);
     }
 
 }

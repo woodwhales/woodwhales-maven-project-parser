@@ -6,7 +6,7 @@ import cn.woodwhales.maven.entity.ExclusionInfo;
 /**
  * ExclusionInfoMapper
  *
- * @author woodwhales on 2021-11-16 11:31:40
+ * @author woodwhales on 2021-11-24 17:10:10
  *
  */
 public interface ExclusionInfoMapper extends BaseMapper<ExclusionInfo> {

@@ -14,15 +14,14 @@
 
 
 -- 导出 woodwhales_maven_project_parser 的数据库结构
-DROP DATABASE IF EXISTS `woodwhales_maven_project_parser`;
 CREATE DATABASE IF NOT EXISTS `woodwhales_maven_project_parser` /*!40100 DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci */;
 USE `woodwhales_maven_project_parser`;
 
 -- 导出  表 woodwhales_maven_project_parser.dependency_info 结构
-DROP TABLE IF EXISTS `dependency_info`;
 CREATE TABLE IF NOT EXISTS `dependency_info` (
   `id` bigint(20) unsigned NOT NULL AUTO_INCREMENT COMMENT '主键',
   `root_project_key` varchar(200) CHARACTER SET utf8 NOT NULL COMMENT '项目根目录hash值',
+  `project_key` varchar(200) CHARACTER SET utf8 NOT NULL COMMENT '文件绝对路径hash值',
   `project_info_id` bigint(20) unsigned NOT NULL COMMENT '工程信息表主键',
   `group_id` varchar(200) CHARACTER SET utf8 DEFAULT NULL COMMENT 'groupId',
   `artifact_id` varchar(200) CHARACTER SET utf8 DEFAULT NULL COMMENT 'artifactId',
@@ -33,16 +32,17 @@ CREATE TABLE IF NOT EXISTS `dependency_info` (
   `update_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
   PRIMARY KEY (`id`),
   KEY `project_info_id` (`project_info_id`),
-  KEY `root_project_key` (`root_project_key`)
+  KEY `root_project_key` (`root_project_key`),
+  KEY `project_key` (`project_key`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='依赖信息表';
 
 -- 数据导出被取消选择。
 
 -- 导出  表 woodwhales_maven_project_parser.dependency_management_info 结构
-DROP TABLE IF EXISTS `dependency_management_info`;
 CREATE TABLE IF NOT EXISTS `dependency_management_info` (
   `id` bigint(20) unsigned NOT NULL AUTO_INCREMENT COMMENT '主键',
   `root_project_key` varchar(200) CHARACTER SET utf8 NOT NULL COMMENT '项目根目录hash值',
+  `project_key` varchar(200) CHARACTER SET utf8 NOT NULL COMMENT '文件绝对路径hash值',
   `project_info_id` bigint(20) unsigned NOT NULL COMMENT '工程信息表主键',
   `group_id` varchar(200) CHARACTER SET utf8 DEFAULT NULL COMMENT 'groupId',
   `artifact_id` varchar(200) CHARACTER SET utf8 DEFAULT NULL COMMENT 'artifactId',
@@ -53,16 +53,18 @@ CREATE TABLE IF NOT EXISTS `dependency_management_info` (
   `update_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
   PRIMARY KEY (`id`),
   KEY `project_info_id` (`project_info_id`),
-  KEY `root_project_key` (`root_project_key`)
+  KEY `root_project_key` (`root_project_key`),
+  KEY `project_key` (`project_key`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='dependencyManagement 信息表';
 
 -- 数据导出被取消选择。
 
 -- 导出  表 woodwhales_maven_project_parser.exclusion_info 结构
-DROP TABLE IF EXISTS `exclusion_info`;
 CREATE TABLE IF NOT EXISTS `exclusion_info` (
   `id` bigint(20) unsigned NOT NULL AUTO_INCREMENT COMMENT '主键',
   `root_project_key` varchar(200) CHARACTER SET utf8 NOT NULL COMMENT '项目根目录hash值',
+  `project_key` varchar(200) CHARACTER SET utf8 NOT NULL COMMENT '文件绝对路径hash值',
+  `project_info_id` bigint(20) unsigned NOT NULL COMMENT '工程信息表主键',
   `dependency_info_id` bigint(20) unsigned NOT NULL COMMENT '工程信息表主键',
   `group_id` varchar(200) CHARACTER SET utf8 DEFAULT NULL COMMENT 'groupId',
   `artifact_id` varchar(200) CHARACTER SET utf8 DEFAULT NULL COMMENT 'artifactId',
@@ -70,33 +72,37 @@ CREATE TABLE IF NOT EXISTS `exclusion_info` (
   `update_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
   PRIMARY KEY (`id`),
   KEY `dependency_info_id` (`dependency_info_id`),
-  KEY `root_project_key` (`root_project_key`)
+  KEY `root_project_key` (`root_project_key`),
+  KEY `project_key` (`project_key`),
+  KEY `project_info_id` (`project_info_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='依赖排除信息表';
 
 -- 数据导出被取消选择。
 
 -- 导出  表 woodwhales_maven_project_parser.module_info 结构
-DROP TABLE IF EXISTS `module_info`;
 CREATE TABLE IF NOT EXISTS `module_info` (
   `id` bigint(20) unsigned NOT NULL AUTO_INCREMENT COMMENT '主键',
   `root_project_key` varchar(200) CHARACTER SET utf8 NOT NULL COMMENT '项目根目录hash值',
+  `project_key` varchar(200) COLLATE utf8mb4_unicode_ci NOT NULL COMMENT '当前工程绝对路径hash值',
   `project_info_id` bigint(20) unsigned NOT NULL COMMENT '工程信息表主键',
   `module` varchar(200) COLLATE utf8mb4_unicode_ci NOT NULL COMMENT 'module',
+  `absolute_file_path` varchar(200) COLLATE utf8mb4_unicode_ci NOT NULL COMMENT '文件绝对路径',
   `create_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
   `update_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
   PRIMARY KEY (`id`),
   KEY `project_info_id` (`project_info_id`),
-  KEY `root_file_path_key` (`root_project_key`) USING BTREE
+  KEY `root_file_path_key` (`root_project_key`) USING BTREE,
+  KEY `project_key` (`project_key`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='模块信息表';
 
 -- 数据导出被取消选择。
 
 -- 导出  表 woodwhales_maven_project_parser.project_info 结构
-DROP TABLE IF EXISTS `project_info`;
 CREATE TABLE IF NOT EXISTS `project_info` (
   `id` bigint(20) unsigned NOT NULL AUTO_INCREMENT COMMENT '主键',
   `root_project_key` varchar(200) NOT NULL COMMENT '项目根目录hash值',
   `project_alias` varchar(200) NOT NULL COMMENT '项目别名',
+  `project_key` varchar(200) NOT NULL COMMENT '文件绝对路径hash值',
   `absolute_file_path` varchar(1024) DEFAULT NULL COMMENT '文件绝对路径',
   `group_id` varchar(200) DEFAULT NULL COMMENT 'groupId',
   `artifact_id` varchar(200) DEFAULT NULL COMMENT 'artifactId',
@@ -113,16 +119,17 @@ CREATE TABLE IF NOT EXISTS `project_info` (
   `create_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
   `update_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
   PRIMARY KEY (`id`),
-  KEY `root_file_path_key` (`root_project_key`) USING BTREE
+  KEY `root_file_path_key` (`root_project_key`) USING BTREE,
+  KEY `project_key` (`project_key`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COMMENT='maven工程信息表';
 
 -- 数据导出被取消选择。
 
 -- 导出  表 woodwhales_maven_project_parser.properties_info 结构
-DROP TABLE IF EXISTS `properties_info`;
 CREATE TABLE IF NOT EXISTS `properties_info` (
   `id` bigint(20) unsigned NOT NULL AUTO_INCREMENT COMMENT '主键',
   `root_project_key` varchar(200) NOT NULL COMMENT '项目根目录hash值',
+  `project_key` varchar(200) NOT NULL COMMENT '文件绝对路径hash值',
   `project_info_id` bigint(20) unsigned NOT NULL COMMENT '工程信息表主键',
   `prop_key` varchar(1024) NOT NULL COMMENT 'key',
   `prop_value` text NOT NULL COMMENT 'value',
@@ -130,7 +137,8 @@ CREATE TABLE IF NOT EXISTS `properties_info` (
   `update_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
   PRIMARY KEY (`id`),
   KEY `project_info_id` (`project_info_id`),
-  KEY `root_file_path_key` (`root_project_key`) USING BTREE
+  KEY `root_file_path_key` (`root_project_key`) USING BTREE,
+  KEY `project_key` (`project_key`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COMMENT='配置信息表';
 
 -- 数据导出被取消选择。

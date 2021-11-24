@@ -6,7 +6,7 @@ import cn.woodwhales.maven.entity.ModuleInfo;
 /**
  * ModuleInfoMapper
  *
- * @author woodwhales on 2021-11-16 11:31:40
+ * @author woodwhales on 2021-11-24 17:10:10
  *
  */
 public interface ModuleInfoMapper extends BaseMapper<ModuleInfo> {

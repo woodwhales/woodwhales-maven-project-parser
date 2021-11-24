@@ -10,7 +10,7 @@
     </parent>
     <groupId>cn.woodwhales.maven</groupId>
     <artifactId>woodwhales-maven-project-parser</artifactId>
-    <version>3.0.0</version>
+    <version>3.5.0</version>
 
     <name>maven-project-parser</name>
     <description>maven 工程解析器，一键生成可视化组件、依赖关系图</description>

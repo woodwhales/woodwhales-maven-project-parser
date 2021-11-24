@@ -44,14 +44,13 @@ public class MavenPomParseTool {
         // 设置 parent
         projectInfoDto.setParentInfoDto(MavenPomParseTool.parentInfo(rootElement));
         // 设置 modules
-        projectInfoDto.setModules(MavenPomParseTool.modules(rootElement));
+        projectInfoDto.setModules(MavenPomParseTool.modules(rootElement, projectInfoDto));
         // 设置 properties
         projectInfoDto.setProperties(MavenPomParseTool.properties(rootElement));
         // 设置 dependencyManagement
         projectInfoDto.setDependencyManagement(MavenPomParseTool.dependencyManagement(rootElement));
         // 设置 dependencies
         projectInfoDto.setDependency(MavenPomParseTool.dependencies(rootElement));
-
         return projectInfoDto;
     }
 
@@ -126,18 +125,17 @@ public class MavenPomParseTool {
         return dependencyInfoDtoList;
     }
 
-    public static List<String> modules(Element rootElement) {
+    public static List<ModuleInfoDto> modules(Element rootElement, ProjectInfoDto projectInfoDto) {
         Element modulesElement = rootElement.element("modules");
-        List<String> modules = null;
+        List<ModuleInfoDto> moduleInfoDtoList = null;
         if(Objects.nonNull(modulesElement)) {
-            modules = new ArrayList<>();
+            moduleInfoDtoList = new ArrayList<>();
             List<Element> elements = modulesElement.elements();
-
             for (Element moduleElement : elements) {
-                modules.add(String.valueOf(moduleElement.getData()));
+                moduleInfoDtoList.add(new ModuleInfoDto(projectInfoDto.getAbsoluteFilePath(), String.valueOf(moduleElement.getData())));
             }
         }
-        return modules;
+        return moduleInfoDtoList;
     }
 
     @Data
@@ -147,6 +145,38 @@ public class MavenPomParseTool {
         private String groupId;
         private String artifactId;
         private String version;
+    }
+
+    @Data
+    @AllArgsConstructor
+    @NoArgsConstructor
+    public static class ModuleInfoDto {
+        /**
+         * module 名称
+         */
+        private String moduleName;
+
+        /**
+         * 父工程文件绝对路径
+         */
+        private String parentFilePath;
+
+        /**
+         * 项目绝对路径
+         */
+        private String absoluteFilePath;
+
+        /**
+         * pom 文件绝对路径
+         */
+        private String pomAbsoluteFilePath;
+
+        public ModuleInfoDto(String parentFilePath, String moduleName) {
+            this.parentFilePath = parentFilePath;
+            this.absoluteFilePath = parentFilePath + File.separator + moduleName;
+            this.pomAbsoluteFilePath = this.absoluteFilePath + File.separator + "pom.xml";
+            this.moduleName = moduleName;
+        }
     }
 
     @Data
@@ -169,10 +199,11 @@ public class MavenPomParseTool {
         private String description;
 
         private ParentInfoDto parentInfoDto;
-        private List<String> modules;
+        private List<ModuleInfoDto> modules;
         private Map<String, String> properties;
         private List<DependencyInfoDto> dependencyManagement;
         private List<DependencyInfoDto> dependency;
+        private List<ProjectInfoDto> subProjectInfoList;
 
         public ProjectInfoDto(String absoluteFilePath) {
             this.absoluteFilePath = absoluteFilePath;
