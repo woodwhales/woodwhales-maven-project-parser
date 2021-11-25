@@ -1,6 +1,5 @@
-package cn.woodwhales.maven;
+package cn.woodwhales.maven.util;
 
-import cn.woodwhales.maven.util.PlantumlTool;
 import org.apache.commons.io.FileUtils;
 import org.junit.jupiter.api.Test;
 
@@ -11,13 +10,12 @@ import java.nio.charset.StandardCharsets;
 /**
  * @author woodwhales on 2021-11-17 10:30
  */
-public class PlantUmlTest {
+public class PlantumlToolTest {
 
     @Test
     public void test() throws IOException {
         File file = new File("src/test/resources/index.html");
         FileUtils.writeStringToFile(file, "<img src=\"\"/>", StandardCharsets.UTF_8);
-
         System.setProperty("PLANTUML_LIMIT_SIZE", "10240");
         String imageBase64 = PlantumlTool.generateImageBase64(getUml());
         FileUtils.writeStringToFile(file, "<img src=\"" + imageBase64 + "\"/>", StandardCharsets.UTF_8);
