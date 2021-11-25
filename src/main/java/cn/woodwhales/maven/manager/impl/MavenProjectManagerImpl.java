@@ -83,7 +83,7 @@ public class MavenProjectManagerImpl implements MavenProjectManager {
         BuildProjectConfig buildProjectConfig = new BuildProjectConfig(absoluteFilePath, rootProjectKey, now);
         MavenPomParseTool.ProjectInfoDto projectInfo = this.saveProjectInfo(buildProjectConfig, ROOT_FLAG);
         this.saveChild(projectInfo, buildProjectConfig);
-        return OpResult.success(new BuildProjectResult(rootProjectKey));
+        return OpResult.success(new BuildProjectResult(projectInfoDto, rootProjectKey));
     }
 
     private void deleteProjectInfo(String rootProjectKey) {

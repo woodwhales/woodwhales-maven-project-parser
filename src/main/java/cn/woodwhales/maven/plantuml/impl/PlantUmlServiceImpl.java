@@ -48,7 +48,7 @@ public class PlantUmlServiceImpl implements PlantUmlService {
         }
 
         MavenComponentInfo rootMavenComponentInfo = this.tree(projectInfoList, rootProjectInfo);
-        OpResult<String> modulesOpResult = plantUmlParseManager.drawMavenComponentInfo(projectInfoRequestBody, rootMavenComponentInfo);
+        OpResult<String> modulesOpResult = plantUmlParseManager.drawMavenComponentInfo2(projectInfoRequestBody, buildProjectResult);
         OpResult<String> relationsOpResult = plantUmlParseManager.drawMavenDependencyInfo(projectInfoRequestBody, rootMavenComponentInfo);
         PlantUmlVo plantUmlVo = new PlantUmlVo(modulesOpResult.getData(), relationsOpResult.getData());
         return RespVO.success(plantUmlVo);

@@ -7,7 +7,9 @@ import cn.woodwhales.maven.controller.request.ProjectInfoRequestBody;
 import cn.woodwhales.maven.entity.DependencyInfo;
 import cn.woodwhales.maven.manager.PlantUmlParseManager;
 import cn.woodwhales.maven.mapper.DependencyInfoMapper;
+import cn.woodwhales.maven.model.BuildProjectResult;
 import cn.woodwhales.maven.model.MavenComponentInfo;
+import cn.woodwhales.maven.util.MavenPomParseTool;
 import com.google.common.collect.Sets;
 import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -27,6 +29,57 @@ public class PlantUmlParseManagerImpl implements PlantUmlParseManager {
     private final static String BR = "\n";
 
     @Override
+    public OpResult<String> drawMavenComponentInfo2(ProjectInfoRequestBody projectInfoRequestBody,
+                                                    BuildProjectResult buildProjectResult) {
+        if(Boolean.FALSE.equals(projectInfoRequestBody.getShowComponent())) {
+            return OpResult.success();
+        }
+
+        final MavenPomParseTool.ProjectInfoDto projectInfoDto = buildProjectResult.getProjectInfoDto();
+        StringBuffer componentPlantuml = new StringBuffer();
+        componentPlantuml.append("@startuml");
+        componentPlantuml.append(BR);
+        componentPlantuml.append(BR);
+        componentPlantuml.append(this.drawMavenComponentInfo(projectInfoRequestBody, projectInfoDto));
+        componentPlantuml.append(BR);
+        componentPlantuml.append("@enduml");
+        return OpResult.success(componentPlantuml.toString());
+    }
+
+    private String drawMavenComponentInfo(ProjectInfoRequestBody projectInfoRequestBody,
+                                          final MavenPomParseTool.ProjectInfoDto projectInfoDto) {
+        final String artifactId = projectInfoDto.getArtifactId();
+        final List<MavenPomParseTool.ModuleInfoDto> modules = projectInfoDto.getModules();
+        StringBuffer packagePlantuml = new StringBuffer();
+        if(CollectionUtils.isEmpty(modules)) {
+            if(projectInfoRequestBody.getShowVersion()) {
+                packagePlantuml.append(String.format("  component \"%s\\n%s\" ", artifactId, projectInfoDto.getVersion()));
+            } else {
+                packagePlantuml.append(String.format("  component \"%s\"", artifactId));
+            }
+            packagePlantuml.append(BR);
+        } else {
+            if(projectInfoRequestBody.getShowVersion()) {
+                packagePlantuml.append(String.format("package \"%s-%s\" {", artifactId, projectInfoDto.getVersion()));
+            } else {
+                packagePlantuml.append(String.format("package \"%s\" {", artifactId));
+            }
+
+            packagePlantuml.append(BR);
+            packagePlantuml.append(BR);
+
+            final List<MavenPomParseTool.ProjectInfoDto> subProjectInfoList = projectInfoDto.getSubProjectInfoList();
+            for (MavenPomParseTool.ProjectInfoDto subProjectInfo : subProjectInfoList) {
+                packagePlantuml.append("  " + this.drawMavenComponentInfo(projectInfoRequestBody, subProjectInfo));
+                packagePlantuml.append(BR);
+            }
+            packagePlantuml.append(BR);
+            packagePlantuml.append("}");
+        }
+        return packagePlantuml.toString();
+    }
+
+    @Override
     public OpResult<String> drawMavenComponentInfo(ProjectInfoRequestBody projectInfoRequestBody,
                                                    MavenComponentInfo rootMavenComponentInfo) {
         if(Boolean.FALSE.equals(projectInfoRequestBody.getShowComponent())) {
@@ -41,9 +94,9 @@ public class PlantUmlParseManagerImpl implements PlantUmlParseManager {
         modules.append(BR);
         for (MavenComponentInfo componentInfo : rootMavenComponentInfo.childComponentList) {
             if(projectInfoRequestBody.getShowVersion()) {
-                modules.append(String.format("    component \"%s\\n%s\" ", componentInfo.alias, componentInfo.version));
+                modules.append(String.format("  component \"%s\\n%s\" ", componentInfo.alias, componentInfo.version));
             } else {
-                modules.append(String.format("    component \"%s\"", componentInfo.alias));
+                modules.append(String.format("  component \"%s\"", componentInfo.alias));
             }
             modules.append(BR);
         }
@@ -62,10 +115,16 @@ public class PlantUmlParseManagerImpl implements PlantUmlParseManager {
 
         String projectGroupId = projectInfoRequestBody.getProjectGroupId();
 
-        List<DependencyInfo> dependencyInfoList = MybatisPlusExecutor.executeQueryList(dependencyInfoMapper, wrapper -> {
-            wrapper.in(DependencyInfo::getProjectInfoId, projectInfoIdList)
-                    .eq(DependencyInfo::getGroupId, projectGroupId);
-        });
+        List<DependencyInfo> dependencyInfoList;
+        if(CollectionUtils.isNotEmpty(projectInfoIdList)) {
+            dependencyInfoList = MybatisPlusExecutor.executeQueryList(dependencyInfoMapper, wrapper -> {
+                wrapper.in(DependencyInfo::getProjectInfoId, projectInfoIdList)
+                        .eq(DependencyInfo::getGroupId, projectGroupId);
+            });
+        } else {
+            // 表示没有任何依赖
+            return OpResult.success();
+        }
 
         Map<Long, MavenComponentInfo> dependencyInfoMap = DataTool.toMap(rootMavenComponentInfo.childComponentList,
                                                                         componentInfo -> componentInfo.projectInfoId);

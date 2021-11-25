@@ -1,5 +1,6 @@
 package cn.woodwhales.maven.model;
 
+import cn.woodwhales.maven.util.MavenPomParseTool;
 import lombok.Data;
 
 /**
@@ -8,10 +9,11 @@ import lombok.Data;
 @Data
 public class BuildProjectResult {
 
+    private final MavenPomParseTool.ProjectInfoDto projectInfoDto;
     private final String rootProjectKey;
 
-    public BuildProjectResult(String rootProjectKey) {
+    public BuildProjectResult(MavenPomParseTool.ProjectInfoDto projectInfoDto, String rootProjectKey) {
+        this.projectInfoDto = projectInfoDto;
         this.rootProjectKey = rootProjectKey;
     }
-
 }
