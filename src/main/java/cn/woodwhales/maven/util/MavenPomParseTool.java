@@ -13,6 +13,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
+import static cn.woodwhales.common.business.DataTool.toList;
 import static cn.woodwhales.maven.util.Dom4jTool.getElementValue;
 import static java.util.Collections.emptyList;
 
@@ -21,17 +22,16 @@ import static java.util.Collections.emptyList;
  */
 public class MavenPomParseTool {
 
-    public static ProjectInfoDto projectInfo(String absoluteFilePath) {
+    public static ProjectInfoDto buildProjectInfo(String absoluteFilePath) {
         File file = new File(absoluteFilePath);
         if(!file.exists()) {
             throw new RuntimeException(String.format("%s 文件目录不存在", absoluteFilePath));
         }
 
-        ProjectInfoDto projectInfoDto = new ProjectInfoDto(absoluteFilePath).build();
-        return projectInfoDto;
+        return new ProjectInfoDto(absoluteFilePath);
     }
 
-    public static ProjectInfoDto projectInfo(Element rootElement, ProjectInfoDto projectInfoDto) {
+    private static ProjectInfoDto buildProjectInfo(Element rootElement, ProjectInfoDto projectInfoDto) {
         String groupId = getElementValue(rootElement, "groupId");
         String artifactId = getElementValue(rootElement, "artifactId");
         String version = getElementValue(rootElement, "version");
@@ -51,6 +51,9 @@ public class MavenPomParseTool {
         projectInfoDto.setDependencyManagement(MavenPomParseTool.dependencyManagement(rootElement));
         // 设置 dependencies
         projectInfoDto.setDependency(MavenPomParseTool.dependencies(rootElement));
+        // 设置
+        projectInfoDto.setSubProjectInfoList(toList(projectInfoDto.getModules(), ProjectInfoDto::new));
+
         return projectInfoDto;
     }
 
@@ -208,6 +211,13 @@ public class MavenPomParseTool {
         public ProjectInfoDto(String absoluteFilePath) {
             this.absoluteFilePath = absoluteFilePath;
             this.pomAbsoluteFilePath = this.absoluteFilePath + File.separator + "pom.xml";
+            build();
+        }
+
+        public ProjectInfoDto(ModuleInfoDto moduleInfoDto) {
+            this.absoluteFilePath = moduleInfoDto.getAbsoluteFilePath();
+            this.pomAbsoluteFilePath = this.absoluteFilePath + File.separator + "pom.xml";
+            build();
         }
 
         private ProjectInfoDto buildBaseInfo(String groupId, String artifactId, String version,
@@ -221,11 +231,10 @@ public class MavenPomParseTool {
             return this;
         }
 
-        public ProjectInfoDto build() {
-            Document rooDocument = Dom4jTool.load(this.pomAbsoluteFilePath);
-            Element rootElement = rooDocument.getRootElement();
-            MavenPomParseTool.projectInfo(rootElement, this);
-            return this;
+        private void build() {
+            Document rootDocument = Dom4jTool.load(this.pomAbsoluteFilePath);
+            Element rootElement = rootDocument.getRootElement();
+            MavenPomParseTool.buildProjectInfo(rootElement, this);
         }
 
     }

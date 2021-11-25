@@ -97,7 +97,7 @@ public class MavenProjectManagerImpl implements MavenProjectManager {
 
     private MavenPomParseTool.ProjectInfoDto saveProjectInfo(final BuildProjectConfig buildProjectConfig,
                                                              final RootProjectFlagEnum rootProjectFlagEnum) {
-        MavenPomParseTool.ProjectInfoDto projectInfoDto = MavenPomParseTool.projectInfo(buildProjectConfig.absoluteFilePath);
+        MavenPomParseTool.ProjectInfoDto projectInfoDto = MavenPomParseTool.buildProjectInfo(buildProjectConfig.absoluteFilePath);
 
         // 保存 project_info
         final ProjectInfo parentProjectInfo = this.buildProjectInfo(projectInfoDto, buildProjectConfig, rootProjectFlagEnum);
