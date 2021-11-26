@@ -41,3 +41,14 @@
 关系视图
 
 ![](doc/images/03.png)
+
+## 常见问题
+
+### Cannot find Graphviz
+
+未生成正确的关系图，而是出现如下图片：
+
+![](doc/images/error1.png)
+
+图片中提示：`Cannot find Graphviz`，此时需要停止本服务，在操作系统的环境变量中配置 graphviz。详细安装步骤，请参见笔者的博文：[PlantUML 语法之时序图](https://woodwhales.cn/2019/01/13/017/) 的`安装 graphviz`章节即可解决。
+

@@ -10,17 +10,14 @@ import cn.woodwhales.maven.model.MavenComponentInfo;
  */
 public interface PlantUmlParseManager {
 
-    OpResult<String> drawMavenComponentInfo2(ProjectInfoRequestBody projectInfoRequestBody,
-                                             BuildProjectResult buildProjectResult);
-
     /**
      * 绘制组件关系图
      * @param projectInfoRequestBody
-     * @param rootMavenComponentInfo
+     * @param buildProjectResult
      * @return
      */
     OpResult<String> drawMavenComponentInfo(ProjectInfoRequestBody projectInfoRequestBody,
-                                            MavenComponentInfo rootMavenComponentInfo);
+                                             BuildProjectResult buildProjectResult);
 
     /**
      * 绘制依赖关系图
@@ -30,4 +27,7 @@ public interface PlantUmlParseManager {
      */
     OpResult<String> drawMavenDependencyInfo(ProjectInfoRequestBody projectInfoRequestBody,
                                              MavenComponentInfo rootMavenComponentInfo);
+
+    OpResult<String> drawMavenDependencyInfo(ProjectInfoRequestBody projectInfoRequestBody,
+                                            BuildProjectResult buildProjectResult);
 }

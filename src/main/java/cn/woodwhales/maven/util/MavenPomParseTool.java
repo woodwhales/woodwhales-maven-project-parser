@@ -50,7 +50,7 @@ public class MavenPomParseTool {
         // 设置 dependencyManagement
         projectInfoDto.setDependencyManagement(MavenPomParseTool.dependencyManagement(rootElement));
         // 设置 dependencies
-        projectInfoDto.setDependency(MavenPomParseTool.dependencies(rootElement));
+        projectInfoDto.setDependencyList(MavenPomParseTool.dependencies(rootElement));
         // 设置
         projectInfoDto.setSubProjectInfoList(toList(projectInfoDto.getModules(), ProjectInfoDto::new));
 
@@ -205,7 +205,7 @@ public class MavenPomParseTool {
         private List<ModuleInfoDto> modules;
         private Map<String, String> properties;
         private List<DependencyInfoDto> dependencyManagement;
-        private List<DependencyInfoDto> dependency;
+        private List<DependencyInfoDto> dependencyList;
         private List<ProjectInfoDto> subProjectInfoList;
 
         public ProjectInfoDto(String absoluteFilePath) {

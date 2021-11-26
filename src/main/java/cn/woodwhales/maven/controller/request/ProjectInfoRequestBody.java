@@ -36,6 +36,11 @@ public class ProjectInfoRequestBody {
 	private Boolean showVersion = false;
 
 	/**
+	 * 是否显示根项目组件
+	 */
+	private Boolean showRootComponent = true;
+
+	/**
 	 * 指定 groupId
 	 */
 	private String projectGroupId;

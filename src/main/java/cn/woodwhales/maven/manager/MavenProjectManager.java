@@ -11,13 +11,6 @@ import org.springframework.transaction.annotation.Transactional;
 public interface MavenProjectManager {
 
     @Transactional(rollbackFor = {Error.class, Exception.class})
-    OpResult<BuildProjectResult> saveProjectInfo2(MavenPomParseTool.ProjectInfoDto projectInfoDto);
-
-    /**
-     * 保存 maven 工程信息
-     * @param projectInfoDto
-     * @return
-     */
     OpResult<BuildProjectResult> saveProjectInfo(MavenPomParseTool.ProjectInfoDto projectInfoDto);
 
 }

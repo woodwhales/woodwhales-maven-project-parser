@@ -47,35 +47,14 @@ public class PlantUmlServiceImpl implements PlantUmlService {
             projectInfoRequestBody.setProjectGroupId(rootProjectInfo.getGroupId());
         }
 
-        MavenComponentInfo rootMavenComponentInfo = this.tree(projectInfoList, rootProjectInfo);
-        OpResult<String> modulesOpResult = plantUmlParseManager.drawMavenComponentInfo2(projectInfoRequestBody, buildProjectResult);
-        OpResult<String> relationsOpResult = plantUmlParseManager.drawMavenDependencyInfo(projectInfoRequestBody, rootMavenComponentInfo);
+        OpResult<String> modulesOpResult = plantUmlParseManager.drawMavenComponentInfo(projectInfoRequestBody, buildProjectResult);
+        OpResult<String> relationsOpResult = plantUmlParseManager.drawMavenDependencyInfo(projectInfoRequestBody, buildProjectResult);
         PlantUmlVo plantUmlVo = new PlantUmlVo(modulesOpResult.getData(), relationsOpResult.getData());
         return RespVO.success(plantUmlVo);
     }
 
-    private MavenComponentInfo tree(List<ProjectInfo> projectInfoList, ProjectInfo rootProjectInfo) {
-        MavenComponentInfo rootMavenComponentInfo = this.buildMavenComponentInfo(rootProjectInfo);
-        List<ProjectInfo> nonRootProjectInfoList = this.getNonRootProjectInfo(projectInfoList);
-        List<MavenComponentInfo> childComponentList = DataTool.toList(nonRootProjectInfoList, this::buildMavenComponentInfo);
-        rootMavenComponentInfo.childComponentList = childComponentList;
-        return rootMavenComponentInfo;
-    }
-
     private ProjectInfo getRootProjectInfo(List<ProjectInfo> projectInfoList) {
         return DataTool.filter(projectInfoList, projectInfo -> ROOT_FLAG.match(projectInfo.getRootProjectFlag())).get(0);
-    }
-
-    private List<ProjectInfo> getNonRootProjectInfo(List<ProjectInfo> projectInfoList) {
-        return DataTool.filter(projectInfoList, projectInfo -> !ROOT_FLAG.match(projectInfo.getRootProjectFlag()));
-    }
-
-    private MavenComponentInfo buildMavenComponentInfo(ProjectInfo projectInfo) {
-        return new MavenComponentInfo(projectInfo.getId(),
-                                      projectInfo.getGroupId(),
-                                      projectInfo.getArtifactId(),
-                                      projectInfo.getVersion(),
-                                      projectInfo.getProjectAlias());
     }
 
 }
