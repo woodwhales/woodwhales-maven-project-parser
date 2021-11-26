@@ -25,6 +25,6 @@ public class ParseServiceImpl implements ParseService {
         final String projectFilePath = projectInfoRequestBody.getProjectFilePath();
         log.info("build project info, filePath = {}", projectFilePath);
         MavenPomParseTool.ProjectInfoDto projectInfoDto = MavenPomParseTool.buildProjectInfo(projectFilePath);
-        return mavenProjectManager.saveProjectInfo(projectInfoDto);
+        return mavenProjectManager.saveProjectInfo2(projectInfoDto);
     }
 }

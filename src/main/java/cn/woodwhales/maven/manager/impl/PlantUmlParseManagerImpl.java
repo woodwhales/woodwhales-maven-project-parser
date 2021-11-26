@@ -61,20 +61,24 @@ public class PlantUmlParseManagerImpl implements PlantUmlParseManager {
         } else {
             if(projectInfoRequestBody.getShowVersion()) {
                 packagePlantuml.append(String.format("package \"%s-%s\" {", artifactId, projectInfoDto.getVersion()));
+                packagePlantuml.append(BR);
+                packagePlantuml.append(BR);
             } else {
                 packagePlantuml.append(String.format("package \"%s\" {", artifactId));
+                packagePlantuml.append(BR);
+                packagePlantuml.append(BR);
             }
 
-            packagePlantuml.append(BR);
-            packagePlantuml.append(BR);
-
             final List<MavenPomParseTool.ProjectInfoDto> subProjectInfoList = projectInfoDto.getSubProjectInfoList();
+            if(CollectionUtils.isEmpty(subProjectInfoList)) {
+                packagePlantuml.append(BR);
+            }
             for (MavenPomParseTool.ProjectInfoDto subProjectInfo : subProjectInfoList) {
                 packagePlantuml.append("  " + this.drawMavenComponentInfo(projectInfoRequestBody, subProjectInfo));
                 packagePlantuml.append(BR);
             }
-            packagePlantuml.append(BR);
             packagePlantuml.append("}");
+            packagePlantuml.append(BR);
         }
         return packagePlantuml.toString();
     }

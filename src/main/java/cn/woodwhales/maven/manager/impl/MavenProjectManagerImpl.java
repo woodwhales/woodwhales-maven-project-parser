@@ -9,7 +9,7 @@ import cn.woodwhales.maven.enums.ParentFlagEnum;
 import cn.woodwhales.maven.enums.RootProjectFlagEnum;
 import cn.woodwhales.maven.manager.MavenProjectManager;
 import cn.woodwhales.maven.mapper.*;
-import cn.woodwhales.maven.model.BuildProjectConfig;
+import cn.woodwhales.maven.model.GlobalProjectConfig;
 import cn.woodwhales.maven.model.BuildProjectResult;
 import cn.woodwhales.maven.util.MavenPomParseTool;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
@@ -73,6 +73,55 @@ public class MavenProjectManagerImpl implements MavenProjectManager {
 
     @Override
     @Transactional(rollbackFor = {Error.class, Exception.class})
+    public OpResult<BuildProjectResult> saveProjectInfo2(MavenPomParseTool.ProjectInfoDto projectInfoDto) {
+        final Date now = new Date();
+        final String absoluteFilePath = projectInfoDto.getAbsoluteFilePath();
+        final String rootProjectKey = SecureUtil.sha256(absoluteFilePath);
+
+        this.deleteProjectInfo(rootProjectKey);
+
+        GlobalProjectConfig globalProjectConfig = new GlobalProjectConfig(absoluteFilePath, rootProjectKey, now);
+        this.saveProjectInfo(projectInfoDto, globalProjectConfig, ROOT_FLAG);
+        return OpResult.success(new BuildProjectResult(projectInfoDto, rootProjectKey));
+    }
+
+
+    private MavenPomParseTool.ProjectInfoDto saveProjectInfo(MavenPomParseTool.ProjectInfoDto projectInfoDto,
+                                                             GlobalProjectConfig globalProjectConfig,
+                                                             RootProjectFlagEnum rootProjectFlagEnum) {
+        // 保存 project_info
+        final ProjectInfo currentProjectInfo = this.buildProjectInfo(projectInfoDto, globalProjectConfig, rootProjectFlagEnum);
+        batchProjectInfoMapper.save(currentProjectInfo);
+
+        // 保存 module_info
+        batchInsert(batchModuleInfoMapper, this.buildModuleInfo(currentProjectInfo, projectInfoDto, globalProjectConfig));
+
+        // 保存 properties_info
+        batchInsert(batchPropertiesInfoMapper, this.buildPropertiesInfo(currentProjectInfo, projectInfoDto, globalProjectConfig));
+
+        // 保存 dependency_management_info
+        batchInsert(batchDependencyManagementInfoMapper, this.buildDependencyManagementInfo(currentProjectInfo, projectInfoDto, globalProjectConfig));
+
+        // 保存 dependency_info
+        List<DependencyInfo> dependencyInfoList = this.buildDependencyInfo(currentProjectInfo, projectInfoDto, globalProjectConfig);
+        batchInsert(batchDependencyInfoMapper, dependencyInfoList);
+
+        // 保存 exclusion_info
+        batchInsert(batchExclusionInfoMapper, this.buildExclusionInfo(currentProjectInfo, projectInfoDto, dependencyInfoList, globalProjectConfig));
+
+        // 保存子工程信息
+        final List<MavenPomParseTool.ProjectInfoDto> subProjectInfoList = projectInfoDto.getSubProjectInfoList();
+        if(CollectionUtils.isNotEmpty(subProjectInfoList)) {
+            subProjectInfoList.forEach(subProjectInfoDto ->
+                    this.saveProjectInfo(subProjectInfoDto, globalProjectConfig, NON_ROOT_FLAG));
+        }
+
+        return projectInfoDto;
+    }
+
+
+    @Override
+    @Transactional(rollbackFor = {Error.class, Exception.class})
     public OpResult<BuildProjectResult> saveProjectInfo(MavenPomParseTool.ProjectInfoDto projectInfoDto) {
         final Date now = new Date();
         final String absoluteFilePath = projectInfoDto.getAbsoluteFilePath();
@@ -80,9 +129,9 @@ public class MavenProjectManagerImpl implements MavenProjectManager {
 
         this.deleteProjectInfo(rootProjectKey);
 
-        BuildProjectConfig buildProjectConfig = new BuildProjectConfig(absoluteFilePath, rootProjectKey, now);
-        MavenPomParseTool.ProjectInfoDto projectInfo = this.saveProjectInfo(buildProjectConfig, ROOT_FLAG);
-        this.saveChild(projectInfo, buildProjectConfig);
+        GlobalProjectConfig globalProjectConfig = new GlobalProjectConfig(absoluteFilePath, rootProjectKey, now);
+        MavenPomParseTool.ProjectInfoDto projectInfo = this.saveProjectInfo(globalProjectConfig, ROOT_FLAG);
+        this.saveChild(projectInfo, globalProjectConfig);
         return OpResult.success(new BuildProjectResult(projectInfoDto, rootProjectKey));
     }
 
@@ -95,43 +144,43 @@ public class MavenProjectManagerImpl implements MavenProjectManager {
         exclusionInfoMapper.delete(Wrappers.<ExclusionInfo> lambdaQuery().eq(ExclusionInfo::getRootProjectKey, rootProjectKey));
     }
 
-    private MavenPomParseTool.ProjectInfoDto saveProjectInfo(final BuildProjectConfig buildProjectConfig,
+    private MavenPomParseTool.ProjectInfoDto saveProjectInfo(final GlobalProjectConfig globalProjectConfig,
                                                              final RootProjectFlagEnum rootProjectFlagEnum) {
-        MavenPomParseTool.ProjectInfoDto projectInfoDto = MavenPomParseTool.buildProjectInfo(buildProjectConfig.absoluteFilePath);
+        MavenPomParseTool.ProjectInfoDto projectInfoDto = MavenPomParseTool.buildProjectInfo(globalProjectConfig.absoluteFilePath);
 
         // 保存 project_info
-        final ProjectInfo parentProjectInfo = this.buildProjectInfo(projectInfoDto, buildProjectConfig, rootProjectFlagEnum);
+        final ProjectInfo parentProjectInfo = this.buildProjectInfo(projectInfoDto, globalProjectConfig, rootProjectFlagEnum);
         batchProjectInfoMapper.save(parentProjectInfo);
 
         // 保存 module_info
-        batchInsert(batchModuleInfoMapper, this.buildModuleInfo(parentProjectInfo, projectInfoDto, buildProjectConfig));
+        batchInsert(batchModuleInfoMapper, this.buildModuleInfo(parentProjectInfo, projectInfoDto, globalProjectConfig));
 
         // 保存 properties_info
-        batchInsert(batchPropertiesInfoMapper, this.buildPropertiesInfo(parentProjectInfo, projectInfoDto, buildProjectConfig));
+        batchInsert(batchPropertiesInfoMapper, this.buildPropertiesInfo(parentProjectInfo, projectInfoDto, globalProjectConfig));
 
         // 保存 dependency_management_info
-        batchInsert(batchDependencyManagementInfoMapper, this.buildDependencyManagementInfo(parentProjectInfo, projectInfoDto, buildProjectConfig));
+        batchInsert(batchDependencyManagementInfoMapper, this.buildDependencyManagementInfo(parentProjectInfo, projectInfoDto, globalProjectConfig));
 
         // 保存 dependency_info
-        List<DependencyInfo> dependencyInfoList = this.buildDependencyInfo(parentProjectInfo, projectInfoDto, buildProjectConfig);
+        List<DependencyInfo> dependencyInfoList = this.buildDependencyInfo(parentProjectInfo, projectInfoDto, globalProjectConfig);
         batchInsert(batchDependencyInfoMapper, dependencyInfoList);
 
         // 保存 exclusion_info
-        batchInsert(batchExclusionInfoMapper, this.buildExclusionInfo(parentProjectInfo, projectInfoDto, dependencyInfoList, buildProjectConfig));
+        batchInsert(batchExclusionInfoMapper, this.buildExclusionInfo(parentProjectInfo, projectInfoDto, dependencyInfoList, globalProjectConfig));
         return projectInfoDto;
     }
 
     private void saveChild(final MavenPomParseTool.ProjectInfoDto projectInfoDtoModel,
-                           final BuildProjectConfig buildProjectConfig) {
+                           final GlobalProjectConfig globalProjectConfig) {
         if(ParentFlagEnum.PARENT_FLAG.match(projectInfoDtoModel.getPackaging())) {
             List<MavenPomParseTool.ModuleInfoDto> moduleInfoDtoList = projectInfoDtoModel.getModules();
             if(CollectionUtils.isEmpty(moduleInfoDtoList)) {
                 return;
             } else {
                 for (MavenPomParseTool.ModuleInfoDto moduleInfoDto : moduleInfoDtoList) {
-                    BuildProjectConfig moduleBuildProjectConfig = buildProjectConfig.copyInstance(moduleInfoDto.getAbsoluteFilePath());
-                    MavenPomParseTool.ProjectInfoDto moduleProjectInfoDto = this.saveProjectInfo(moduleBuildProjectConfig, NON_ROOT_FLAG);
-                    this.saveChild(moduleProjectInfoDto, moduleBuildProjectConfig);
+                    GlobalProjectConfig moduleGlobalProjectConfig = globalProjectConfig.copyInstance(moduleInfoDto.getAbsoluteFilePath());
+                    MavenPomParseTool.ProjectInfoDto moduleProjectInfoDto = this.saveProjectInfo(moduleGlobalProjectConfig, NON_ROOT_FLAG);
+                    this.saveChild(moduleProjectInfoDto, moduleGlobalProjectConfig);
                 }
             }
         }
@@ -140,7 +189,7 @@ public class MavenProjectManagerImpl implements MavenProjectManager {
     private List<ExclusionInfo> buildExclusionInfo(final ProjectInfo parentProjectInfo,
                                                    final MavenPomParseTool.ProjectInfoDto projectInfoDtoModel,
                                                    final List<DependencyInfo> dependencyInfoList,
-                                                   final BuildProjectConfig buildProjectConfig) {
+                                                   final GlobalProjectConfig globalProjectConfig) {
         Map<String, DependencyInfo> dependencyInfoMap = DataTool.toMap(dependencyInfoList, dependencyInfo -> {
             String groupId = dependencyInfo.getGroupId();
             String artifactId = dependencyInfo.getArtifactId();
@@ -162,14 +211,14 @@ public class MavenProjectManagerImpl implements MavenProjectManager {
             List<MavenPomParseTool.DependencyInfoDto.DependencyExclusionInfoDto> exclusionList = dependencyInfoDto.getExclusions();
             exclusionInfoList.addAll(DataTool.toList(exclusionList, exclusion -> {
                 ExclusionInfo exclusionInfo = new ExclusionInfo();
-                exclusionInfo.setRootProjectKey(buildProjectConfig.rootProjectKey);
+                exclusionInfo.setRootProjectKey(globalProjectConfig.rootProjectKey);
                 exclusionInfo.setProjectKey(dependencyInfo.getProjectKey());
                 exclusionInfo.setProjectInfoId(dependencyInfo.getId());
                 exclusionInfo.setDependencyInfoId(dependencyInfo.getId());
                 exclusionInfo.setGroupId(exclusion.getGroupId());
                 exclusionInfo.setArtifactId(exclusion.getArtifactId());
-                exclusionInfo.setCreateTime(buildProjectConfig.now);
-                exclusionInfo.setUpdateTime(buildProjectConfig.now);
+                exclusionInfo.setCreateTime(globalProjectConfig.now);
+                exclusionInfo.setUpdateTime(globalProjectConfig.now);
                 return exclusionInfo;
             }));
         }
@@ -178,7 +227,7 @@ public class MavenProjectManagerImpl implements MavenProjectManager {
 
     private List<DependencyInfo> buildDependencyInfo(final ProjectInfo parentProjectInfo,
                                                      final MavenPomParseTool.ProjectInfoDto projectInfoDtoModel,
-                                                     final BuildProjectConfig bootProjectConfig) {
+                                                     final GlobalProjectConfig bootProjectConfig) {
         return DataTool.toList(projectInfoDtoModel.getDependency(), dependency -> {
             DependencyInfo dependencyInfo = new DependencyInfo();
             dependencyInfo.setRootProjectKey(bootProjectConfig.rootProjectKey);
@@ -197,26 +246,26 @@ public class MavenProjectManagerImpl implements MavenProjectManager {
 
     public List<PropertiesInfo> buildPropertiesInfo(final ProjectInfo parentProjectInfo,
                                                     final MavenPomParseTool.ProjectInfoDto projectInfoDtoModel,
-                                                    final BuildProjectConfig buildProjectConfig) {
+                                                    final GlobalProjectConfig globalProjectConfig) {
         return DataTool.mapToList(projectInfoDtoModel.getProperties(), (key, value) -> {
             PropertiesInfo propertiesInfo = new PropertiesInfo();
-            propertiesInfo.setRootProjectKey(buildProjectConfig.rootProjectKey);
+            propertiesInfo.setRootProjectKey(globalProjectConfig.rootProjectKey);
             propertiesInfo.setProjectInfoId(parentProjectInfo.getId());
             propertiesInfo.setProjectKey(parentProjectInfo.getProjectKey());
             propertiesInfo.setPropKey(key);
             propertiesInfo.setPropValue(value);
-            propertiesInfo.setCreateTime(buildProjectConfig.now);
-            propertiesInfo.setUpdateTime(buildProjectConfig.now);
+            propertiesInfo.setCreateTime(globalProjectConfig.now);
+            propertiesInfo.setUpdateTime(globalProjectConfig.now);
             return propertiesInfo;
         });
     }
 
     public List<DependencyManagementInfo> buildDependencyManagementInfo(final ProjectInfo parentProjectInfo,
                                                                         final MavenPomParseTool.ProjectInfoDto projectInfoDtoModel,
-                                                                        final BuildProjectConfig buildProjectConfig) {
+                                                                        final GlobalProjectConfig globalProjectConfig) {
         return DataTool.toList(projectInfoDtoModel.getDependencyManagement(), dependencyManagement -> {
             DependencyManagementInfo dependencyManagementInfo = new DependencyManagementInfo();
-            dependencyManagementInfo.setRootProjectKey(buildProjectConfig.rootProjectKey);
+            dependencyManagementInfo.setRootProjectKey(globalProjectConfig.rootProjectKey);
             dependencyManagementInfo.setProjectInfoId(parentProjectInfo.getId());
             dependencyManagementInfo.setProjectKey(parentProjectInfo.getProjectKey());
             dependencyManagementInfo.setGroupId(dependencyManagement.getGroupId());
@@ -224,56 +273,62 @@ public class MavenProjectManagerImpl implements MavenProjectManager {
             dependencyManagementInfo.setVersion(dependencyManagement.getVersion());
             dependencyManagementInfo.setScope(dependencyManagement.getScope());
             dependencyManagementInfo.setType(dependencyManagement.getType());
-            dependencyManagementInfo.setCreateTime(buildProjectConfig.now);
-            dependencyManagementInfo.setUpdateTime(buildProjectConfig.now);
+            dependencyManagementInfo.setCreateTime(globalProjectConfig.now);
+            dependencyManagementInfo.setUpdateTime(globalProjectConfig.now);
             return dependencyManagementInfo;
         });
     }
 
     public List<ModuleInfo> buildModuleInfo(final ProjectInfo parentProjectInfo,
                                             final MavenPomParseTool.ProjectInfoDto projectInfoDtoModel,
-                                            final BuildProjectConfig buildProjectConfig) {
+                                            final GlobalProjectConfig globalProjectConfig) {
         return DataTool.toList(projectInfoDtoModel.getModules(), module -> {
             ModuleInfo moduleInfo = new ModuleInfo();
-            moduleInfo.setRootProjectKey(buildProjectConfig.rootProjectKey);
+            moduleInfo.setRootProjectKey(globalProjectConfig.rootProjectKey);
             moduleInfo.setProjectInfoId(parentProjectInfo.getId());
             moduleInfo.setProjectKey(parentProjectInfo.getProjectKey());
             moduleInfo.setProjectKey(SecureUtil.sha256(module.getAbsoluteFilePath()));
             moduleInfo.setAbsoluteFilePath(module.getAbsoluteFilePath());
             moduleInfo.setModule(module.getModuleName());
-            moduleInfo.setCreateTime(buildProjectConfig.now);
-            moduleInfo.setUpdateTime(buildProjectConfig.now);
+            moduleInfo.setCreateTime(globalProjectConfig.now);
+            moduleInfo.setUpdateTime(globalProjectConfig.now);
             return moduleInfo;
         });
     }
 
-    public ProjectInfo buildProjectInfo(final MavenPomParseTool.ProjectInfoDto projectInfoDtoModel,
-                                        final BuildProjectConfig buildProjectConfig,
+    public ProjectInfo buildProjectInfo(final MavenPomParseTool.ProjectInfoDto projectInfoDto,
+                                        final GlobalProjectConfig globalProjectConfig,
                                         final RootProjectFlagEnum rootProjectFlagEnum) {
         ProjectInfo projectInfo = new ProjectInfo();
-        projectInfo.setRootProjectKey(buildProjectConfig.rootProjectKey);
-        String absoluteFilePath = projectInfoDtoModel.getAbsoluteFilePath();
+        projectInfo.setRootProjectKey(globalProjectConfig.rootProjectKey);
+        String absoluteFilePath = projectInfoDto.getAbsoluteFilePath();
         if(StringUtils.endsWith(absoluteFilePath, File.separator)) {
             absoluteFilePath = StringUtils.substringBeforeLast(absoluteFilePath, File.separator);
         }
-        projectInfo.setProjectKey(SecureUtil.sha256(absoluteFilePath));
+
+        if(ROOT_FLAG.equals(rootProjectFlagEnum)) {
+            projectInfo.setProjectKey(globalProjectConfig.rootProjectKey);
+        } else {
+            projectInfo.setProjectKey(SecureUtil.sha256(absoluteFilePath));
+        }
+
         projectInfo.setAbsoluteFilePath(absoluteFilePath);
-        projectInfo.setProjectAlias(projectInfoDtoModel.getArtifactId());
-        projectInfo.setGroupId(projectInfoDtoModel.getGroupId());
-        projectInfo.setArtifactId(projectInfoDtoModel.getArtifactId());
-        projectInfo.setVersion(projectInfoDtoModel.getVersion());
-        projectInfo.setPackaging(projectInfoDtoModel.getPackaging());
-        projectInfo.setName(projectInfoDtoModel.getName());
-        projectInfo.setDescription(projectInfoDtoModel.getDescription());
+        projectInfo.setProjectAlias(projectInfoDto.getArtifactId());
+        projectInfo.setGroupId(projectInfoDto.getGroupId());
+        projectInfo.setArtifactId(projectInfoDto.getArtifactId());
+        projectInfo.setVersion(projectInfoDto.getVersion());
+        projectInfo.setPackaging(projectInfoDto.getPackaging());
+        projectInfo.setName(projectInfoDto.getName());
+        projectInfo.setDescription(projectInfoDto.getDescription());
         projectInfo.setRelativeFilePath(null);
-        projectInfo.setParentFlag(ParentFlagEnum.packagingOf(projectInfoDtoModel.getPackaging()).code);
+        projectInfo.setParentFlag(ParentFlagEnum.packagingOf(projectInfoDto.getPackaging()).code);
         projectInfo.setRootProjectFlag(rootProjectFlagEnum.code);
-        MavenPomParseTool.ParentInfoDto parentInfoDto = projectInfoDtoModel.getParentInfoDto();
+        MavenPomParseTool.ParentInfoDto parentInfoDto = projectInfoDto.getParentInfoDto();
         projectInfo.setParentGroupId(parentInfoDto.getGroupId());
         projectInfo.setParentArtifactId(parentInfoDto.getArtifactId());
         projectInfo.setParentVersion(parentInfoDto.getVersion());
-        projectInfo.setCreateTime(buildProjectConfig.now);
-        projectInfo.setUpdateTime(buildProjectConfig.now);
+        projectInfo.setCreateTime(globalProjectConfig.now);
+        projectInfo.setUpdateTime(globalProjectConfig.now);
         return projectInfo;
     }
 
