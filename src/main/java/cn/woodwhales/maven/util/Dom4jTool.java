@@ -1,12 +1,15 @@
 package cn.woodwhales.maven.util;
 
+import cn.hutool.core.io.FileUtil;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.io.FileUtils;
 import org.dom4j.Document;
 import org.dom4j.DocumentException;
 import org.dom4j.Element;
 import org.dom4j.io.SAXReader;
 import org.springframework.util.CollectionUtils;
 
+import java.io.File;
 import java.io.InputStream;
 import java.util.HashMap;
 import java.util.List;
@@ -25,6 +28,12 @@ public class Dom4jTool {
      * @return Document 对象+
      */
     public static Document load(String filePathName) {
+
+        if(!FileUtil.exist(filePathName)) {
+            log.error("指定:%s文件,不存在", filePathName);
+            throw new IllegalArgumentException(String.format("指定：%s文件不存在", filePathName));
+        }
+
         Document document = null;
         try {
             SAXReader reader = new SAXReader();
