@@ -56,31 +56,53 @@ body {
 	    <label class="layui-form-label">项目路径</label>
 	    <div class="layui-input-block">
 	      <input type="text" id="projectFilePath" name="projectFilePath" autocomplete="off" placeholder="请输入 项目路径" lay-verify="required" class="layui-input">
-
-
 	    </div>
 	  </div>
-	  <div class="layui-form-item">
-          <div class="layui-inline">
-            <label class="layui-form-label">生成组件</label>
-            <input type="checkbox" lay-skin="switch" lay-filter="showComponentFilter" checked lay-text="显示|不显示">
-            <input type="text" id="showComponentId" name="showComponent" value="true" hidden="true">
-          </div>
-          <div class="layui-inline">
-              <label class="layui-form-label">全部依赖</label>
-              <input type="checkbox" lay-skin="switch" lay-filter="showAllRelationFilter" checked lay-text="全部|部分">
-              <input type="text" id="showAllRelationId" name="showAllRelation" value="true" hidden="true">
-          </div>
 
-        <!--
-         TODO 显示版本有问题，需要再优化，暂不支持该功能
-         <div class="layui-inline">
-              <label class="layui-form-label">显示版本</label>
-              <input type="checkbox" lay-skin="switch" lay-filter="showVersionFilter" lay-text="显示|不显示">
-              <input type="text" id="showVersionId" name="showVersion" value="false" hidden="true">
-         </div>
-          -->
-	  </div>
+
+        <fieldset class="layui-elem-field">
+            <legend>generate config</legend>
+            <div class="layui-field-box">
+                <div class="layui-form-item">
+                    <label class="layui-form-label">组件配置</label>
+                    <div class="layui-input-block">
+                        <div class="layui-inline">
+                            <label class="layui-form-label">生成组件</label>
+                            <input type="checkbox" lay-skin="switch" lay-filter="showComponentFilter" checked
+                                   lay-text="显示|不显示">
+                            <input type="text" id="showComponentId" name="showComponent" value="true" hidden="true">
+                        </div>
+
+                        <!--
+                        TODO 显示版本有问题，需要再优化，暂不支持该功能
+                        <div class="layui-inline">
+                            <label class="layui-form-label">显示版本</label>
+                            <input type="checkbox" lay-skin="switch" lay-filter="showVersionFilter" lay-text="显示|不显示">
+                            <input type="text" id="showVersionId" name="showVersion" value="false" hidden="true">
+                        </div>
+                        -->
+                    </div>
+                </div>
+                <div class="layui-form-item">
+                    <label class="layui-form-label">依赖配置</label>
+                    <div class="layui-input-block">
+                        <div class="layui-inline">
+                            <label class="layui-form-label">全部依赖</label>
+                            <input type="checkbox" lay-skin="switch" lay-filter="showAllRelationFilter" checked
+                                   lay-text="全部|部分">
+                            <input type="text" id="showAllRelationId" name="showAllRelation" value="true" hidden="true">
+                        </div>
+                        <div class="layui-inline">
+                            <label class="layui-form-label">显示根组件</label>
+                            <input type="checkbox" lay-skin="switch" lay-filter="showRootComponentFilter" checked
+                                   lay-text="全部|部分">
+                            <input type="text" id="showRootComponentId" name="showRootComponent" value="true"
+                                   hidden="true">
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </fieldset>
 	  <div class="layui-form-item">
           <div class="layui-input-block">
             <button type="submit" class="layui-btn" lay-submit="" lay-filter="submitFilter">立即提交</button>
@@ -151,9 +173,17 @@ body {
 
     form.on('switch(showVersionFilter)', function(data){
         if(this.checked) {
-            $('#showVersionId').val('false');
+            $('#showVersionId').val('true');
         } else {
             $('#showVersionId').val('false');
+        }
+    });
+
+    form.on('switch(showRootComponentFilter)', function(data){
+        if(this.checked) {
+            $('#showRootComponentId').val('true');
+        } else {
+            $('#showRootComponentId').val('false');
         }
     });
 

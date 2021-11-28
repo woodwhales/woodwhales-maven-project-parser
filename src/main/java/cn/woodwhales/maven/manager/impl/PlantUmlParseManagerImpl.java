@@ -159,8 +159,18 @@ public class PlantUmlParseManagerImpl implements PlantUmlParseManager {
             relations.append("@startuml");
             relations.append(BR);
             relations.append(BR);
+            if(projectInfoRequestBody.getShowRootComponent()) {
+                relations.append(String.format("package \"%s\" {", rootProjectInfoDto.getArtifactId()));
+                relations.append(BR);
+            }
             relationComponentSet.forEach(relationComponent -> relations.append(relationComponent).append(BR));
             relations.append(BR);
+
+            if(projectInfoRequestBody.getShowRootComponent()) {
+                relations.append("}");
+                relations.append(BR);
+                relations.append(BR);
+            }
             relations.append("@enduml");
             return OpResult.success(relations.toString());
         }
@@ -170,7 +180,7 @@ public class PlantUmlParseManagerImpl implements PlantUmlParseManager {
                                          MavenPomParseTool.ProjectInfoDto projectInfoDto,
                                          LinkedHashSet<String> plantuml) {
         Boolean showRootComponent = projectInfoRequestBody.getShowRootComponent();
-        if(!showRootComponent && StringUtils.equalsIgnoreCase(projectInfoRequestBody.getProjectFilePath(), projectInfoDto.getAbsoluteFilePath())) {
+        if(StringUtils.equalsIgnoreCase(projectInfoRequestBody.getProjectFilePath(), projectInfoDto.getAbsoluteFilePath())) {
             // 项目根目录不设置依赖
             List<MavenPomParseTool.ProjectInfoDto> subProjectInfoList = projectInfoDto.getSubProjectInfoList();
             if(CollectionUtils.isNotEmpty(subProjectInfoList)) {
