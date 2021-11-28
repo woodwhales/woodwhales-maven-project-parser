@@ -26,7 +26,7 @@
 
 步骤 3：点击`立即提交`按钮即可。
 
-![](doc/images/page.png)
+![](doc/images/01.png)
 
 ## 示例
 
