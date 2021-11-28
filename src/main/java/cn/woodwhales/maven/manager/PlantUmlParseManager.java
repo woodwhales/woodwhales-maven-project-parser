@@ -25,9 +25,16 @@ public interface PlantUmlParseManager {
      * @param rootMavenComponentInfo
      * @return
      */
+    @Deprecated
     OpResult<String> drawMavenDependencyInfo(ProjectInfoRequestBody projectInfoRequestBody,
                                              MavenComponentInfo rootMavenComponentInfo);
 
+    /**
+     * 绘制依赖关系图
+     * @param projectInfoRequestBody
+     * @param buildProjectResult
+     * @return
+     */
     OpResult<String> drawMavenDependencyInfo(ProjectInfoRequestBody projectInfoRequestBody,
                                             BuildProjectResult buildProjectResult);
 }

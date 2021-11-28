@@ -89,6 +89,7 @@ public class PlantUmlParseManagerImpl implements PlantUmlParseManager {
         return packagePlantuml.toString();
     }
 
+    @Deprecated
     @Override
     public OpResult<String> drawMavenDependencyInfo(ProjectInfoRequestBody projectInfoRequestBody,
                                                     MavenComponentInfo rootMavenComponentInfo) {
@@ -178,45 +179,50 @@ public class PlantUmlParseManagerImpl implements PlantUmlParseManager {
                 }
             }
         } else {
-            List<MavenPomParseTool.ProjectInfoDto> subProjectInfoList =
-                    filter(projectInfoDto.getSubProjectInfoList(),
-                            subProjectInfo -> isBlank(subProjectInfo.getGroupId()) || equalsIgnoreCase(projectInfoRequestBody.getProjectGroupId(),
-                                    subProjectInfo.getGroupId()));
-
-            for (MavenPomParseTool.ProjectInfoDto subProjectInfo : subProjectInfoList) {
-                String value1;
-                if (projectInfoRequestBody.getShowVersion()) {
-                    value1 = String.format("[ %s\\n%s ] -down-> [ %s\\n%s ]", projectInfoDto.getArtifactId(), projectInfoDto.getVersion(),
-                            subProjectInfo.getArtifactId(), subProjectInfo.getVersion());
-                } else {
-                    value1 = String.format("[ %s ] -down-> [ %s ]", projectInfoDto.getArtifactId(), subProjectInfo.getArtifactId());
-                }
-                plantuml.add(value1);
-
-                List<MavenPomParseTool.DependencyInfoDto> dependencyInfoDtoList =
-                        filter(projectInfoDto.getDependencyList(),
-                                dependency -> equalsIgnoreCase(projectInfoRequestBody.getProjectGroupId(),
-                                        dependency.getGroupId()));
-
-                for (MavenPomParseTool.DependencyInfoDto dependencyInfoDto : dependencyInfoDtoList) {
-                    String value2;
-                    if (projectInfoRequestBody.getShowVersion()) {
-                        value2 = String.format("[ %s\\n%s ] -down-> [ %s\\n%s ]", projectInfoDto.getArtifactId(), projectInfoDto.getVersion(),
-                                dependencyInfoDto.getArtifactId(), dependencyInfoDto.getVersion());
-                    } else {
-                        value2 = String.format("[ %s ] -down-> [ %s ]", projectInfoDto.getArtifactId(), dependencyInfoDto.getArtifactId());
-                    }
-                    plantuml.add(value2);
-                }
-
-                this.drawMavenDependencyInfo(projectInfoRequestBody, subProjectInfo, plantuml);
-            }
+            this.drawSubProject(projectInfoRequestBody, projectInfoDto, plantuml);
+            this.drawDependency(projectInfoRequestBody, projectInfoDto, plantuml);
         }
     }
 
-    private void myCache(ProjectInfoRequestBody projectInfoRequestBody,
-                         StringBuffer relationComponent,
-                         Set<String> groupIdAndArtifactId) {
+    private void drawSubProject(ProjectInfoRequestBody projectInfoRequestBody,
+                                MavenPomParseTool.ProjectInfoDto projectInfoDto,
+                                LinkedHashSet<String> plantuml) {
+        List<MavenPomParseTool.ProjectInfoDto> subProjectInfoList =
+                filter(projectInfoDto.getSubProjectInfoList(),
+                        subProjectInfo -> isBlank(subProjectInfo.getGroupId()) || equalsIgnoreCase(projectInfoRequestBody.getProjectGroupId(),
+                                subProjectInfo.getGroupId()));
+
+        for (MavenPomParseTool.ProjectInfoDto subProjectInfo : subProjectInfoList) {
+            String value1;
+            if (projectInfoRequestBody.getShowVersion()) {
+                value1 = String.format("[ %s\\n%s ] -down-> [ %s\\n%s ]", projectInfoDto.getArtifactId(), projectInfoDto.getVersion(),
+                        subProjectInfo.getArtifactId(), subProjectInfo.getVersion());
+            } else {
+                value1 = String.format("[ %s ] -down-> [ %s ]", projectInfoDto.getArtifactId(), subProjectInfo.getArtifactId());
+            }
+            plantuml.add(value1);
+            this.drawMavenDependencyInfo(projectInfoRequestBody, subProjectInfo, plantuml);
+        }
+    }
+
+    private void drawDependency(ProjectInfoRequestBody projectInfoRequestBody,
+                                MavenPomParseTool.ProjectInfoDto projectInfoDto,
+                                LinkedHashSet<String> plantuml) {
+        List<MavenPomParseTool.DependencyInfoDto> dependencyInfoDtoList =
+                filter(projectInfoDto.getDependencyList(),
+                        dependency -> equalsIgnoreCase(projectInfoRequestBody.getProjectGroupId(),
+                                dependency.getGroupId()));
+
+        for (MavenPomParseTool.DependencyInfoDto dependencyInfoDto : dependencyInfoDtoList) {
+            String value2;
+            if (projectInfoRequestBody.getShowVersion()) {
+                value2 = String.format("[ %s\\n%s ] -down-> [ %s\\n%s ]", projectInfoDto.getArtifactId(), projectInfoDto.getVersion(),
+                        dependencyInfoDto.getArtifactId(), dependencyInfoDto.getVersion());
+            } else {
+                value2 = String.format("[ %s ] -down-> [ %s ]", projectInfoDto.getArtifactId(), dependencyInfoDto.getArtifactId());
+            }
+            plantuml.add(value2);
+        }
 
     }
 
@@ -236,7 +242,6 @@ public class PlantUmlParseManagerImpl implements PlantUmlParseManager {
             value = String.format("[ %s ] -down-> [ %s ]", parentProjectInfo.artifactId, dependencyInfo.getArtifactId());
         }
         cache.add(value);
-
     }
 
 }
