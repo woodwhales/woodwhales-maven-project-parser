@@ -5,6 +5,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import javax.validation.constraints.NotBlank;
+import java.util.Set;
 
 /**
  * @author woodwhales
@@ -43,6 +44,6 @@ public class ProjectInfoRequestBody {
 	/**
 	 * 指定 groupId
 	 */
-	private String projectGroupId;
+	private Set<String> projectGroupIdSet;
 	
 }

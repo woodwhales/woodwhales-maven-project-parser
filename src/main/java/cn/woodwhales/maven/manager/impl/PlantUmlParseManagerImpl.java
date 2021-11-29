@@ -1,8 +1,6 @@
 package cn.woodwhales.maven.manager.impl;
 
-import cn.woodwhales.common.business.DataTool;
 import cn.woodwhales.common.model.result.OpResult;
-import cn.woodwhales.common.mybatisplus.MybatisPlusExecutor;
 import cn.woodwhales.maven.controller.request.ProjectInfoRequestBody;
 import cn.woodwhales.maven.entity.DependencyInfo;
 import cn.woodwhales.maven.manager.PlantUmlParseManager;
@@ -10,17 +8,17 @@ import cn.woodwhales.maven.mapper.DependencyInfoMapper;
 import cn.woodwhales.maven.model.BuildProjectResult;
 import cn.woodwhales.maven.model.MavenComponentInfo;
 import cn.woodwhales.maven.util.MavenPomParseTool;
-import com.google.common.collect.Sets;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.util.*;
-import java.util.function.Function;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 import static cn.woodwhales.common.business.DataTool.filter;
-import static org.apache.commons.lang3.StringUtils.equalsIgnoreCase;
 import static org.apache.commons.lang3.StringUtils.isBlank;
 
 /**
@@ -89,61 +87,6 @@ public class PlantUmlParseManagerImpl implements PlantUmlParseManager {
         return packagePlantuml.toString();
     }
 
-    @Deprecated
-    @Override
-    public OpResult<String> drawMavenDependencyInfo(ProjectInfoRequestBody projectInfoRequestBody,
-                                                    MavenComponentInfo rootMavenComponentInfo) {
-        List<Long> projectInfoIdList = DataTool.toList(rootMavenComponentInfo.childComponentList,
-                componentInfo -> componentInfo.projectInfoId);
-
-        String projectGroupId = projectInfoRequestBody.getProjectGroupId();
-
-        List<DependencyInfo> dependencyInfoList;
-        if (CollectionUtils.isNotEmpty(projectInfoIdList)) {
-            dependencyInfoList = MybatisPlusExecutor.executeQueryList(dependencyInfoMapper, wrapper -> {
-                wrapper.in(DependencyInfo::getProjectInfoId, projectInfoIdList)
-                        .eq(DependencyInfo::getGroupId, projectGroupId);
-            });
-        } else {
-            // 表示没有任何依赖
-            return OpResult.success();
-        }
-
-        Map<Long, MavenComponentInfo> dependencyInfoMap = DataTool.toMap(rootMavenComponentInfo.childComponentList,
-                componentInfo -> componentInfo.projectInfoId);
-        StringBuffer relations = new StringBuffer();
-        relations.append("@startuml");
-        relations.append(BR);
-        relations.append(BR);
-        Set<String> cache = new HashSet<>();
-        Set<Long> hasDependencySet = new HashSet<>();
-        dependencyInfoList.forEach(dependencyInfo -> this.cache(projectInfoRequestBody, dependencyInfoMap, cache, hasDependencySet, dependencyInfo));
-        ArrayList<String> relationList = new ArrayList<>(cache);
-        for (String relation : relationList) {
-            relations.append(relation).append(BR);
-        }
-
-        if (projectInfoRequestBody.getShowAllRelation()) {
-            // 存在独立的模块，没有依赖任何指定 groupId
-            Sets.SetView<Long> noDependencyModuleSet = Sets.difference(dependencyInfoMap.keySet(), hasDependencySet);
-            if (CollectionUtils.isNotEmpty(noDependencyModuleSet)) {
-                noDependencyModuleSet.forEach(moduleProjectId -> {
-                    MavenComponentInfo mavenComponentInfo = dependencyInfoMap.get(moduleProjectId);
-                    if (projectInfoRequestBody.getShowVersion()) {
-                        relations.append(String.format("[ %s\\n%s ]", mavenComponentInfo.artifactId, mavenComponentInfo.version));
-                    } else {
-                        relations.append(String.format("[ %s ]", mavenComponentInfo.artifactId));
-                    }
-                    relations.append(BR);
-                });
-            }
-        }
-
-        relations.append(BR);
-        relations.append("@enduml");
-        return OpResult.success(relations.toString());
-    }
-
     @Override
     public OpResult<String> drawMavenDependencyInfo(ProjectInfoRequestBody projectInfoRequestBody,
                                                     BuildProjectResult buildProjectResult) {
@@ -199,8 +142,8 @@ public class PlantUmlParseManagerImpl implements PlantUmlParseManager {
                                 LinkedHashSet<String> plantuml) {
         List<MavenPomParseTool.ProjectInfoDto> subProjectInfoList =
                 filter(projectInfoDto.getSubProjectInfoList(),
-                        subProjectInfo -> isBlank(subProjectInfo.getGroupId()) || equalsIgnoreCase(projectInfoRequestBody.getProjectGroupId(),
-                                subProjectInfo.getGroupId()));
+                        subProjectInfo -> isBlank(subProjectInfo.getGroupId())
+                                || projectInfoRequestBody.getProjectGroupIdSet().contains(subProjectInfo.getGroupId()));
 
         for (MavenPomParseTool.ProjectInfoDto subProjectInfo : subProjectInfoList) {
             String value1;
@@ -220,8 +163,7 @@ public class PlantUmlParseManagerImpl implements PlantUmlParseManager {
                                 LinkedHashSet<String> plantuml) {
         List<MavenPomParseTool.DependencyInfoDto> dependencyInfoDtoList =
                 filter(projectInfoDto.getDependencyList(),
-                        dependency -> equalsIgnoreCase(projectInfoRequestBody.getProjectGroupId(),
-                                dependency.getGroupId()));
+                        dependency -> projectInfoRequestBody.getProjectGroupIdSet().contains(dependency.getGroupId()));
 
         for (MavenPomParseTool.DependencyInfoDto dependencyInfoDto : dependencyInfoDtoList) {
             String value2;

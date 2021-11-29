@@ -11,11 +11,14 @@ import cn.woodwhales.maven.manager.PlantUmlParseManager;
 import cn.woodwhales.maven.mapper.ProjectInfoMapper;
 import cn.woodwhales.maven.model.BuildProjectResult;
 import cn.woodwhales.maven.plantuml.PlantUmlService;
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import static cn.woodwhales.maven.enums.RootProjectFlagEnum.ROOT_FLAG;
 
@@ -42,8 +45,10 @@ public class PlantUmlServiceImpl implements PlantUmlService {
         ProjectInfo rootProjectInfo = this.getRootProjectInfo(projectInfoList);
 
         // 如果用户没有指定 groupId， 则使用根项目的 groupId
-        if(StringUtils.isBlank(projectInfoRequestBody.getProjectGroupId())) {
-            projectInfoRequestBody.setProjectGroupId(StringUtils.defaultIfBlank(rootProjectInfo.getGroupId(), rootProjectInfo.getParentGroupId()));
+        if(CollectionUtils.isEmpty(projectInfoRequestBody.getProjectGroupIdSet())) {
+            Set<String> projectGroupIdSet = new HashSet<>();
+            projectGroupIdSet.add(StringUtils.defaultIfBlank(rootProjectInfo.getGroupId(), rootProjectInfo.getParentGroupId()));
+            projectInfoRequestBody.setProjectGroupIdSet(projectGroupIdSet);
         }
 
         OpResult<String> modulesOpResult = plantUmlParseManager.drawMavenComponentInfo(projectInfoRequestBody, buildProjectResult);
