@@ -10,7 +10,6 @@ import cn.woodwhales.maven.entity.ProjectInfo;
 import cn.woodwhales.maven.manager.PlantUmlParseManager;
 import cn.woodwhales.maven.mapper.ProjectInfoMapper;
 import cn.woodwhales.maven.model.BuildProjectResult;
-import cn.woodwhales.maven.model.MavenComponentInfo;
 import cn.woodwhales.maven.plantuml.PlantUmlService;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -44,7 +43,7 @@ public class PlantUmlServiceImpl implements PlantUmlService {
 
         // 如果用户没有指定 groupId， 则使用根项目的 groupId
         if(StringUtils.isBlank(projectInfoRequestBody.getProjectGroupId())) {
-            projectInfoRequestBody.setProjectGroupId(rootProjectInfo.getGroupId());
+            projectInfoRequestBody.setProjectGroupId(StringUtils.defaultIfBlank(rootProjectInfo.getGroupId(), rootProjectInfo.getParentGroupId()));
         }
 
         OpResult<String> modulesOpResult = plantUmlParseManager.drawMavenComponentInfo(projectInfoRequestBody, buildProjectResult);
