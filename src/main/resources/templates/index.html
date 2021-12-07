@@ -214,7 +214,9 @@ body {
 		    	layer.close(index);
                 if(res.code === 0) {
                     $('#modulesId').html(res.data.modules);
+                    $('#modulesId').attr('rows', res.data.modules.split("\n").length);
                     $('#relationsId').html(res.data.relations);
+                    $('#relationsId').attr('rows', res.data.relations.split("\n").length);
                     $('#modulesImageBase64Id').show();
                     $('#relationsImageBase64Id').show();
                     $('#modulesImageBase64Id').attr("src", res.data.modulesImageBase64);
